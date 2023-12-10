@@ -248,11 +248,18 @@ if enable_asm
     endif
 endif
 
-config_h_in = configure_file(output: 'config.h.in', configuration: conf)
+config_h_in = configure_file(output: 'config.h.in.in', configuration: conf)
 
-config_h = vcs_tag(command: ['git', 'describe', '--tags', '--long', '--always', '--broken', '--abbrev=40'],
+config_h_intermediate = vcs_tag(command: ['git', 'describe', '--tags', '--long', '--always', '--broken', '--abbrev=40'],
+                                fallback: '@VCS_TAG_FALLBACK@',
+                                input: config_h_in,
+                                output: 'config.h.in')
+
+# Fallback command for older git versions (< 2.13.0) that don't support --broken
+config_h = vcs_tag(command: ['git', 'describe', '--tags', '--long', '--always', '--dirty', '--abbrev=40'],
+                   replace_string: '@VCS_TAG_FALLBACK@',
                    fallback: 'failed to determine (>= @0@)'.format(meson.project_version()),
-                   input: config_h_in,
+                   input: config_h_intermediate,
                    output: 'config.h')
 
 incs = include_directories('.', 'libass')
