@@ -277,6 +277,13 @@ config_h = vcs_tag(command: ['git', 'describe', '--tags', '--long', '--always', 
 incs = include_directories('.', 'libass')
 
 subdir('libass')
+
+if get_option('default_library') == 'both'
+    libass_for_tools = libass.get_static_lib()
+else
+    libass_for_tools = libass
+endif
+
 if get_option('test')
     subdir('test')
 endif

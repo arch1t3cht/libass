@@ -4,4 +4,4 @@ libass_test = executable('libass_test', test_src,
                          install: false,
                          include_directories: incs,
                          dependencies: deps + test_deps,
-                         link_with: libass)
+                         link_with: libass_for_tools)
