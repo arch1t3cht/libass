@@ -95,7 +95,7 @@ jobs:
           meson wrap install zlib
 
       - name: Configure
-        run: meson build ${{ matrix.config.args }} -Dbuildtype=${{ matrix.config.buildtype }}
+        run: meson setup build ${{ matrix.config.args }} -Dbuildtype=${{ matrix.config.buildtype }}
 
       - name: Build
         run: meson compile -C build
