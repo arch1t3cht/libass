@@ -256,6 +256,8 @@ if not get_option('asm').disabled()
     endif
 endif
 
+summary('ASM optimizations', enable_asm)
+
 config_h_in = configure_file(output: 'config.h.in.in', configuration: conf)
 
 config_h_intermediate = vcs_tag(command: ['git', 'describe', '--tags', '--long', '--always', '--broken', '--abbrev=40'],
