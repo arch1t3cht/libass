@@ -56,6 +56,10 @@ foreach name: str_check_functions
     endif
 endforeach
 
+if cc.has_function('fstat') and cc.has_header_symbol('sys/stat.h', 'fstat', args: test_args, prefix: '#include <sys/types.h>')
+    conf.set('HAVE_FSTAT', 1)
+endif
+
 # Dependencies
 
 deps += cc.find_library('m', required: false)
