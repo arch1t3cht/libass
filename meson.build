@@ -101,16 +101,16 @@ if libunibreak_dep.found()
     conf.set('CONFIG_LIBUNIBREAK', 1)
 endif
 
+if get_option('test')
+    test_deps += dependency('libpng', version: '>= 1.2.0')
+    conf.set('CONFIG_LIBPNG', 1)
+endif
+
 fontconfig_dep = dependency('fontconfig', version: '>= 2.10.92', required: get_option('fontconfig'))
 fontconfig = fontconfig_dep.found()
 if fontconfig
     deps += fontconfig_dep
     conf.set('CONFIG_FONTCONFIG', 1)
-endif
-
-if get_option('test')
-    test_deps += dependency('libpng', version: '>= 1.2.0')
-    conf.set('CONFIG_LIBPNG', 1)
 endif
 
 # DirectWrite
