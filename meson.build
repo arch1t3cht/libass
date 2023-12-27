@@ -127,10 +127,12 @@ if host_system == 'windows' and not get_option('directwrite').disabled()
             # WinRT/UWP/app build: GDI and LoadLibrary are unavailable,
             # but DirectWrite is always present
             deps += cc.find_library('dwrite', required: true)
+            summary('win32 desktop APIs', 'no')
         else
             # Win32/desktop build: GDI is always present;
             # DirectWrite is optional but can be loaded via LoadLibrary
             deps += cc.find_library('gdi32', required: true)
+            summary('win32 desktop APIs', 'yes')
         endif
     elif get_option('directwrite').enabled()
         error('DirectWrite was enabled explicitly, but required header is missing.')
