@@ -162,60 +162,35 @@ a system font provider, set -Drequire-system-font-provider=false''')
 endif
 
 # ASM
-
+enable_asm = false
 asm_args = []
 
-# Architecture check
-if host_machine.cpu_family() == 'x86'
-    bittype = '32'
-    asm_args += '-DARCH_X86_64=0'
-    cpu_family = 'x86'
-elif host_machine.cpu_family() == 'x86_64'
-    bittype = '64'
-    asm_args += '-DARCH_X86_64=1'
-    cpu_family = 'x86'
-elif host_machine.cpu_family() == 'aarch64' and host_system == 'darwin'
-    bittype = '64'
-    cpu_family = 'arm64'
-endif
-
-if cpu_family == 'x86'
-    nasm = find_program('nasm', required: get_option('asm'))
-    enable_asm = nasm.found()
-    use_nasm = true
-elif cpu_family == 'arm64'
+if not get_option('asm').disabled()
     enable_asm = true
-    use_nasm = false
-else
-    enable_asm = false
-    use_nasm = false
-endif
-
-# NASM version check
-if enable_asm and use_nasm
-    # This can be cleaned up once 0.64 is available, see https://github.com/xclaesse/libass/commit/cfd3d9971bd585939b97409c0aac79cab3dd2da5
-    nasm_r = run_command(nasm, '-v', check: true)
-    out = nasm_r.stdout().strip().split()
-    if out[1].to_lower() == 'version'
-        if out[2].version_compare('< 2.10')
-            warning('nasm is too old (found @0@); ASM functions are disabled.'.format(out[2]))
-            enable_asm = false
-        endif
+    # Architecture check
+    if host_machine.cpu_family() == 'x86'
+        bittype = '32'
+        asm_args += '-DARCH_X86_64=0'
+        cpu_family = 'x86'
+    elif host_machine.cpu_family() == 'x86_64'
+        bittype = '64'
+        asm_args += '-DARCH_X86_64=1'
+        cpu_family = 'x86'
+    elif host_machine.cpu_family() == 'aarch64'
+        bittype = '64'
+        cpu_family = 'arm64'
     else
-        warning('Unexpected nasm version string: @0@; disabling.'.format(nasm_r.stdout()))
+        message('Assembly optimizations are not yet supported on this architecture; disabling.')
         enable_asm = false
     endif
-endif
 
-if get_option('asm').enabled() and (not enable_asm)
-    error('ASM functions were enabled but are unavailable.')
-elif (not enable_asm) and use_nasm and (not get_option('asm').disabled())
-    warning('Install nasm-2.10 or later for a significantly faster libass build.')
-endif
+    use_nasm = false
 
-# System check
-if enable_asm
-    if use_nasm
+    if cpu_family == 'x86'
+        nasm = find_program('nasm', required: get_option('asm'))
+        enable_asm = nasm.found()
+        use_nasm = true
+
         if host_system == 'windows'
             asm_args += ['-f', 'win' + bittype]
             if bittype == '32'
@@ -228,27 +203,56 @@ if enable_asm
         elif host_system == 'dragonfly' or host_system.endswith('bsd')
             asm_args += ['-f', 'elf' + bittype]
         else
-            error('Please contact libass upstream to figure out if ASM support for your platform can be added. In the meantime, disabling.')
+            error('Please contact libass upstream to figure out if ASM support for your platform can be added. In the meantime, you will need to use -Dasm=disabled.')
             enable_asm = false
         endif
     elif cpu_family == 'arm64'
-        asm_args += '-DPREFIX'
-    endif
-endif
-
-if enable_asm
-    conf.set('CONFIG_ASM', 1)
-    if cpu_family == 'x86'
-        conf.set('ARCH_X86', 1)
-    elif cpu_family == 'arm64'
-        conf.set('ARCH_AARCH64', 1)
+        if host_system == 'darwin'
+            asm_args += '-DPREFIX'
+        endif
     endif
 
-    if use_nasm
-        asm_args += '-Dprivate_prefix=ass'
-        asm_args += ['-I', meson.current_source_dir() / 'libass' + '/', '-DPIC=1', '-o', '@OUTPUT@', '@INPUT@']
+    # NASM version check
+    if enable_asm and use_nasm
+        # This can be cleaned up once 0.64 is available, see https://github.com/xclaesse/libass/commit/cfd3d9971bd585939b97409c0aac79cab3dd2da5
+        nasm_r = run_command(nasm, '-v', check: true)
+        out = nasm_r.stdout().strip().split()
+        if out[1].to_lower() == 'version'
+            if out[2].version_compare('< 2.10')
+                warning('nasm is too old (found @0@); ASM functions are disabled.'.format(out[2]))
+                enable_asm = false
+            endif
+        else
+            warning('Unexpected nasm version string: @0@; disabling.'.format(nasm_r.stdout()))
+            enable_asm = false
+        endif
+    endif
 
-        nasm_gen = generator(nasm, output: '@BASENAME@.o', arguments: asm_args)
+    if not enable_asm
+        # If ASM had to be disabled, error out or warn depending on settings
+        if get_option('asm').enabled()
+            error('ASM functions were enabled but are unavailable.')
+        elif use_nasm
+            warning('Install nasm-2.10 or later for a significantly faster libass build.')
+        endif
+    else
+        conf.set('CONFIG_ASM', 1)
+        if cpu_family == 'x86'
+            conf.set('ARCH_X86', 1)
+            if bittype == '64'
+                conf.set('ARCH_X86_64', 1)
+            endif
+        elif cpu_family == 'arm64'
+            conf.set('ARCH_AARCH64', 1)
+        endif
+
+        # Set up nasm rule
+        if use_nasm
+            asm_args += '-Dprivate_prefix=ass'
+            asm_args += ['-I', meson.current_source_dir() / 'libass' + '/', '-DPIC=1', '-o', '@OUTPUT@', '@INPUT@']
+
+            nasm_gen = generator(nasm, output: '@BASENAME@.o', arguments: asm_args)
+        endif
     endif
 endif
 
