@@ -127,13 +127,14 @@ if host_system == 'windows' and not get_option('directwrite').disabled()
             # WinRT/UWP/app build: GDI and LoadLibrary are unavailable,
             # but DirectWrite is always present
             deps += cc.find_library('dwrite', required: true)
-            summary('win32 desktop APIs', 'no')
+            have_win32_desktop = false
         else
             # Win32/desktop build: GDI is always present;
             # DirectWrite is optional but can be loaded via LoadLibrary
             deps += cc.find_library('gdi32', required: true)
-            summary('win32 desktop APIs', 'yes')
+            have_win32_desktop = true
         endif
+        summary('win32 desktop APIs', have_win32_desktop, bool_yn: true)
     elif get_option('directwrite').enabled()
         error('DirectWrite was enabled explicitly, but required header is missing.')
     endif
@@ -258,7 +259,7 @@ if not get_option('asm').disabled()
     endif
 endif
 
-summary('ASM optimizations', enable_asm)
+summary('ASM optimizations', enable_asm, bool_yn: true)
 
 config_h_in = configure_file(output: 'config.h.in.in', configuration: conf)
 
