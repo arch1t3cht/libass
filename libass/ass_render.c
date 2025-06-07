@@ -3105,9 +3105,16 @@ ass_render_event(RenderContext *state, ASS_Event *event,
     event_images->event = event;
     event_images->imgs = render_text(state);
 
+    ASS_Clip_Metrics *clips = (ASS_Clip_Metrics*)malloc(sizeof *clips);
+    clips->x0 = state->clip_x0;
+    clips->x1 = state->clip_x1;
+    clips->y0 = state->clip_y0;
+    clips->y1 = state->clip_y1;
+
     if (collect_metrics) {
         event_images->metrics.event = event;
         event_images->metrics.runs = state->run_metrics;
+        event_images->metrics.clips = clips;
     }
 
     if (state->border_style == 4)
