@@ -81,6 +81,13 @@ typedef struct ass_metrics_outline {
     struct ass_metrics_outline *next;   // Next outline, or NULL
 } ASS_Metrics_Outline;
 
+typedef struct ass_clip_metrics {
+    int x0;
+    int x1;
+    int y0;
+    int y1;
+} ASS_Clip_Metrics;
+
 /* ASS_RunMetrics is a set of metrics and shape data corresponding to a single run. */
 typedef struct ass_run_metrics {
     ASS_DVector pos;
@@ -99,6 +106,7 @@ typedef struct ass_run_metrics {
 typedef struct ass_metrics {
     ASS_Event *event;   // Becomes invalid once the containing ASS_Track is modified, pruned, or freed
     ASS_RunMetrics *runs;
+    ASS_Clip_Metrics *clips;
     struct ass_metrics *next;   // Next set of metrics, or NULL
 } ASS_Metrics;
 
